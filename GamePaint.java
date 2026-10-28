@@ -76,7 +76,6 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
         add(startButton);
         add(restartButton);
 
-        // ให้คลาสนี้เป็นคนรับการกดปุ่ม และรับคีย์บอร์ด
         startButton.addActionListener(this);
         restartButton.addActionListener(this);
         addKeyListener(this);
@@ -85,7 +84,6 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
 
     // ==================== รับปุ่มกด ====================
 
-    // กดปุ่ม START / PLAY AGAIN
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == startButton) {
             startClicked = true;
@@ -95,7 +93,6 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
         }
     }
 
-    // กดคีย์บอร์ดลง
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
         if (key == KeyEvent.VK_A) {
@@ -109,7 +106,6 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
         }
     }
 
-    // ปล่อยคีย์บอร์ด
     public void keyReleased(KeyEvent e) {
         int key = e.getKeyCode();
         if (key == KeyEvent.VK_A) {
@@ -123,19 +119,19 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
         }
     }
 
-    // ไม่ได้ใช้ แต่ KeyListener บังคับให้ต้องมี
+    // บังคับให้ต้องมี
     public void keyTyped(KeyEvent e) {
     }
 
     // ==================== ลูปเกม ====================
 
-    // เริ่มเกม สร้างเทรดใหม่มารัน run()
+    // เริ่มเกม สร้างเทรดใหม่มารัน
     public void start() {
         Thread gameThread = new Thread(this);
         gameThread.start();
     }
 
-    // ลูปเกม ทำซ้ำทุกๆ 10 มิลลิวินาที
+    // ลูปเกม
     public void run() {
         while (true) {
             if (network != null) {
@@ -149,7 +145,7 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
                 playGame();            // เล่นปกติ
             }
 
-            repaint();   // วาดจอใหม่
+            repaint();
 
             try {
                 Thread.sleep(10);
@@ -158,7 +154,6 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
         }
     }
 
-    // เริ่มเปลี่ยนฉาก (isDying = true คือตาย, false คือผ่านด่าน)
     private void startChangeScene(boolean isDying) {
         dying = isDying;
         waitTime = fullWaitTime;
@@ -221,7 +216,6 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
             startButton.setVisible(false);
         }
 
-        // ปุ่ม PLAY AGAIN โชว์ตอนจบเกม
         restartButton.setVisible(win);
 
         if (startClicked) {
@@ -236,7 +230,6 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
 
     // ==================== เล่นกับเพื่อน ====================
 
-    // ส่งข้อมูลเราไป แล้วอัปเดตไก่เพื่อนทุกคนตามข้อมูลที่ได้มา
     private void updateFriends() {
         network.send(levelNumber, player.getBounds().x, player.getBounds().y, deaths, atDoor);
 
@@ -254,13 +247,14 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
     private void updateOneFriend(int id) {
         int friendLevel = network.friendLevel[id];
         friends[id].moveTo(network.friendX[id], network.friendY[id]);
+        //ย้ายเพื่อน
 
         // อยู่ด่านเดียวกับเรา
         if (friendLevel == levelNumber) {
             friendsHere[id] = friends[id];
         }
 
-        // เพื่อนเพิ่งตายในด่านเดียวกับเรา = เราเริ่มใหม่ด้วย
+        // เพื่อนเพิ่งตายในด่านเดียวกับเรา
         // (ไม่นับเป็นตายของเรา ไม่งั้นจะสั่งกันตายวนไปมา)
         if (network.friendDeaths[id] != lastFriendDeaths[id]) {
             boolean firstTime = (lastFriendDeaths[id] == -1);   // เพิ่งเห็นคนนี้ครั้งแรก ไม่ใช่ตาย
@@ -271,21 +265,21 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
             }
         }
 
-        // เพื่อนไปด่านถัดไปแล้ว (หรือคนเปิดห้องกด START) = เราไปด้วย จะได้ไม่ค้างคนละด่าน
-        // (ไม่นับเพื่อนที่จบเกมแล้ว ไม่งั้นกด PLAY AGAIN แล้วจะโดนดึงกลับไปหน้าจบ)
+        // เพื่อนไปด่านถัดไปแล้ว หรือคนเปิดห้องกด START
+        // ไม่นับเพื่อนที่จบเกมแล้ว ไม่งั้นกด PLAY AGAIN แล้วจะโดนดึงกลับไปหน้าจบ
         if (friendLevel > levelNumber && friendLevel <= Level.LAST_LEVEL && waitTime == 0 && win == false) {
             startChangeScene(false);
         }
 
-        // เราจบเกมแล้ว แต่เพื่อนกด PLAY AGAIN (กลับไปด่าน 1) = เราเล่นใหม่ด้วย
+        // เราจบเกมแล้ว แต่เพื่อนกด PLAY AGAIN กลับไปด่าน 1 = เราเล่นใหม่ด้วย
         if (win && friendLevel == 1) {
             restartClicked = true;
         }
     }
 
     // ออกจากด่านได้หรือยัง
-    // เล่นคนเดียว: เข้าประตูได้เลย ยกเว้นด่านเล่น 2 คน
-    // เล่นกับเพื่อน: ต้องรอจนเพื่อนทุกคนที่ออนไลน์เข้าประตูมาด้วย
+    // เล่นคนเดียว เข้าประตูได้เลย ยกเว้นด่านเล่น 2 คน
+    // เล่นกับเพื่อน ต้องรอจนเพื่อนทุกคนที่ออนไลน์เข้าประตูมาด้วย
     private boolean canLeave() {
         if (network == null) {
             if (levelNumber < Level.FIRST_COOP_LEVEL) {
@@ -301,15 +295,15 @@ public class GamePaint extends JPanel implements Runnable, KeyListener, ActionLi
             if (i != myId && friendLevel >= 0) {
                 onlineCount++;
                 if (friendLevel < levelNumber) {
-                    return false;   // ยังมีคนตามมาไม่ถึงด่านนี้
+                    return false;   // ยังมีคนตามมาไม่ถึง
                 }
                 if (friendLevel == levelNumber && network.friendAtDoor[i] == false) {
-                    return false;   // ยังมีคนไม่เข้าประตู (ถ้าเพื่อนไปด่านถัดไปแล้ว ถือว่าเข้าแล้ว)
+                    return false;   // ยังมีคนบ่เข้าประตู ถ้าเพื่อนไปด่านถัดไป ถือว่าเข้า
                 }
             }
         }
 
-        // ด่าน 2 คน แต่ไม่มีเพื่อนออนไลน์เลย
+        // ด่าน 2 คน แต่ไม่มีเพื่อนออน
         if (levelNumber >= Level.FIRST_COOP_LEVEL && onlineCount == 0) {
             return false;
         }

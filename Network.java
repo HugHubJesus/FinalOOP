@@ -1,12 +1,6 @@
 import java.io.*;
 import java.net.*;
 
-// ระบบเล่นหลายคน
-// - เครื่อง Server (คนเปิดห้อง) เป็นตัวกลาง รับข้อความจากทุก Client แล้วส่งต่อให้คนอื่นทุกคน
-// - เครื่อง Client (คนเข้าห้อง) ส่งข้อความไปหา Server อย่างเดียว
-//
-// ข้อความ 1 บรรทัด = "id ด่าน x y จำนวนครั้งที่ตาย เข้าประตูแล้ว(0/1)"
-// เช่น "2 3 150 410 5 0" = ผู้เล่น id 2 อยู่ด่าน 3 ตำแหน่ง (150, 410) ตายไป 5 ครั้ง ยังไม่เข้าประตู
 public class Network {
     public static final int MAX_PLAYERS = 5;   // มีไก่ 5 สี เลยเล่นได้สูงสุด 5 คน
     public static final int PORT = 50101;
@@ -14,8 +8,8 @@ public class Network {
     public int myId = 0;              // Server = 0, Client ได้เลขจาก Server ตอนต่อเข้ามา
     public boolean isServer = false;
 
-    private PrintWriter toServer;                                    // ใช้ตอนเป็น Client: ช่องส่งไปหา Server
-    private PrintWriter[] toClients = new PrintWriter[MAX_PLAYERS];  // ใช้ตอนเป็น Server: ช่องส่งไปหา Client แต่ละคน ตาม id
+    private PrintWriter toServer;                                    // ใช้ตอนเป็น Client ช่องส่งไปหา Server
+    private PrintWriter[] toClients = new PrintWriter[MAX_PLAYERS];  // ใช้ตอนเป็น Server ช่องส่งไปหา Client แต่ละคน ตาม id
 
     // ข้อมูลผู้เล่นแต่ละคน เก็บตามเลข id
     // friendLevel = -1 คือไม่มีคนนี้ หรือหลุดไปแล้ว, 0 = อยู่หน้า lobby
@@ -62,7 +56,7 @@ public class Network {
         receiveThread.start();
     }
 
-    // Server ส่งข้อความให้ Client ทุกคน ยกเว้นคน skipId (เจ้าของข้อความ)
+    // Server ส่งข้อความให้ Client ทุกคน ยกเว้นคน skipId เจ้าของข้อความ
     public void sendToClients(String message, int skipId) {
         for (int i = 1; i < MAX_PLAYERS; i++) {
             if (i != skipId && toClients[i] != null) {
@@ -79,7 +73,7 @@ public class Network {
         toServer = new PrintWriter(socket.getOutputStream(), true);
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-        // บรรทัดแรกที่ Server ส่งมา = "ID เลข" เช่น "ID 2"
+        // บรรทัดแรกที่Serverส่งมาคือ ID เลข เช่น ID 2
         String firstLine = in.readLine();
         String[] parts = firstLine.split(" ");
         myId = Integer.parseInt(parts[1]);
@@ -107,7 +101,7 @@ public class Network {
         }
     }
 
-    // ได้รับข้อความมา: แยกเป็นส่วนๆ แล้วเก็บไว้ในช่องของคนนั้น
+    // แยกเป็นส่วนๆ แล้วเก็บไว้ในช่องของคนนั้น
     public void readMessage(String message) {
         String[] parts = message.split(" ");
         int id = Integer.parseInt(parts[0]);
@@ -115,7 +109,7 @@ public class Network {
         friendY[id] = Integer.parseInt(parts[3]);
         friendDeaths[id] = Integer.parseInt(parts[4]);
         friendAtDoor[id] = parts[5].equals("1");
-        friendLevel[id] = Integer.parseInt(parts[1]);   // ใส่ด่านทีหลังสุด ข้อมูลอื่นจะได้พร้อมก่อน
+        friendLevel[id] = Integer.parseInt(parts[1]); 
     }
 
     // ผู้เล่นคนนี้หลุดออกจากเกม
